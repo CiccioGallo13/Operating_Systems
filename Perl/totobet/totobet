@@ -1,0 +1,93 @@
+#!/usr/bin/perl
+
+#use lib '/usr/share/perl5';
+use Switch;
+
+open($bets, "<", "schedine");
+open($results, ">", "check");
+$played = '([a-zA-Z]+\-[A-Z][a-z]+)\s+([1X2])\s+(\d+\.\d+)';
+$bet = '#Schedina ([0-9]+)#';
+$importo = '#Importo Scommesso\s+(\d+)';
+$result = '([a-zA-Z]+\-[a-zA-Z]+)\s+([0-9]+)-([0-9]+)';
+$multiplier;
+$iswon = 1;
+$won = 1;
+while(<$bets>){
+    switch($_)
+    {
+        case /$bet/ {
+            /$bet/;
+            print $results "\t\t#Schedina $1 #\n";
+            $multiplier=1;
+            $won = 1;
+        }
+        case /$importo/ {
+            /$importo/;
+            print $results "\t\t#Importo Scomesso: $1\n";
+            print $results "\t\t#Moltiplicatore: $multiplier\n";
+            print $results "\t\t#Possibile vincita: ".$1*$multiplier."\n";
+            if($won==1){
+
+                print $results "\t\t#Vincita: SI\n\n";}
+            else
+                {print $results "\t\t#Vincita: NO\n\n";}
+        }
+
+        case /$played/ {
+            /$played/;
+            $match = $1;
+            $prediction = $2;
+            $quote = $3;
+            $iswon =0;
+            open(matches, "<", "partite");
+            while($myline = <matches>)
+            {#print "$myline";
+                if( $myline =~ /$match/)
+                {   
+                    $myline =~ /$result/;
+                    $teamA = $2;
+                    $teamB =$3;
+                    switch($prediction)
+                    {
+                        case "1" {
+                            if($2 > $3)
+                            {
+                                $iswon = 1;
+                                last;
+                            }
+                        }
+
+                        case "2" {
+                            if($2 < $3)
+                            {
+                                $iswon = 1;
+                                last;
+                            }
+                        }
+
+                        case "X" {
+                            if($2 == $3)
+                            {
+                                $iswon = 1;
+                                last;
+                            }
+                        }
+                    }
+                }
+            }
+            $char = ($iswon)
+                        ? 'OK'
+                        : 'NO';
+            if(!$iswon){
+                $won=0;
+            }
+            print $results "$match\t\t$prediction\t$quote --> $char\n";
+            $multiplier*=$quote;
+            close(matches);
+        }
+
+    }
+
+}
+close($bets);
+close($results);

@@ -1,0 +1,54 @@
+#!/usr/bin/perl 
+
+$mode = shift || die "gli argomenti del comando non sono corretti o assenti";
+
+if($mode eq "-s"){
+    print_info(shift || die "gli argomenti del comando non sono corretti o assenti");
+}
+elsif($mode eq "-b" || die "gli argomenti del comando non sono corretti o assenti")
+{
+    save_on_file(shift || die "gli argomenti del comando non sono corretti o assenti");
+}
+
+sub print_info{
+    %vendorN;
+    %vendorD;
+    open(file, "<", shift) || die "Impossibile aprire il file";
+    while(<file>)
+    {
+        if(/description: (.*)/){
+            
+            $description = $1;
+        }
+        elsif(/product: (.*)/ || /vendor: (.*)/){
+            $vendor= $1;
+        }
+        elsif(/\*.*/){
+            if($vendor && $description){
+                $vendorD{$vendor}.="\n".$description;
+                $vendorN{$vendor}+=1;
+                $vendor=undef;
+            }
+            $description = undef;
+            $vendor = undef;
+        }
+    }
+    if($vendor && $description)
+    {
+        $vendorD{$vendor}.="\n".$description;
+        $vendorN{$vendor}+=1;
+        $vendor=undef;
+    }
+    foreach(sort{($vendorN{$b} <=> $vendorN{$a}) || ($a cmp $b)} keys %vendorN)
+    {
+        print "vendor: $_\nnum_devices: $vendorN{$_}\n\n";
+    }
+    for(sort{$a cmp $b} keys %vendorD){
+        print "vendor: $_\ndescriptions: $vendorD{$_}\n\n";
+    }
+}
+
+sub save_on_file{
+    $file_name = shift;
+    qx(lshw > $file_name 2> /dev/null);  ##/dev/null spazzatura di linux
+}
