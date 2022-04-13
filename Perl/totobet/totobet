@@ -81,7 +81,7 @@ while(<$bets>){
             if(!$iswon){
                 $won=0;
             }
-            print $results "$match\t\t$prediction\t$quote --> $char\n";
+            printf $results "%-25s\t\t$prediction\t$quote --> $char\n", $match;
             $multiplier*=$quote;
             close(matches);
         }
